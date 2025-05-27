@@ -46,9 +46,22 @@ enum GameColor: String, CaseIterable {
     }
 }
 
-enum Orientation {
-    case horizontal
-    case vertical
+enum Orientation: CaseIterable {
+    case horizontal      // ●●
+    case vertical        // ●
+                        // ●
+    case horizontalFlip  // ●●
+    case verticalFlip    // ●
+                        // ●
+    
+    var next: Orientation {
+        switch self {
+        case .horizontal: return .vertical
+        case .vertical: return .horizontalFlip
+        case .horizontalFlip: return .verticalFlip
+        case .verticalFlip: return .horizontal
+        }
+    }
 }
 
 struct FallingPill {
@@ -152,14 +165,21 @@ class DrMarioGame: ObservableObject {
             return true
         }
         
-        // Sol parça kontrolü
+        // Sol parça kontrolü (her zaman var)
         if board[newRow][pill.col].type != .empty {
             return true
         }
         
-        // Sağ parça kontrolü (horizontal ise)
-        if pill.orientation == .horizontal {
+        // Sağ parça kontrolü
+        switch pill.orientation {
+        case .horizontal, .horizontalFlip:
+            // Yatay modlar: sağ tarafa bak
             if pill.col + 1 >= Self.boardWidth || board[newRow][pill.col + 1].type != .empty {
+                return true
+            }
+        case .vertical, .verticalFlip:
+            // Dikey modlar: alt tarafa bak
+            if newRow + 1 >= Self.boardHeight || board[newRow + 1][pill.col].type != .empty {
                 return true
             }
         }
@@ -170,12 +190,35 @@ class DrMarioGame: ObservableObject {
     private func placePillOnBoard() {
         guard let pill = currentPill else { return }
         
-        // Sol parçayı yerleştir
-        board[pill.row][pill.col] = .pill(color: pill.leftColor)
-        
-        // Sağ parçayı yerleştir (horizontal ise)
-        if pill.orientation == .horizontal && pill.col + 1 < Self.boardWidth {
-            board[pill.row][pill.col + 1] = .pill(color: pill.rightColor)
+        // Parçaları yönelime göre yerleştir
+        switch pill.orientation {
+        case .horizontal:
+            // Normal yatay: Sol-Sağ
+            board[pill.row][pill.col] = .pill(color: pill.leftColor)
+            if pill.col + 1 < Self.boardWidth {
+                board[pill.row][pill.col + 1] = .pill(color: pill.rightColor)
+            }
+            
+        case .vertical:
+            // Normal dikey: Üst-Alt
+            board[pill.row][pill.col] = .pill(color: pill.leftColor)
+            if pill.row + 1 < Self.boardHeight {
+                board[pill.row + 1][pill.col] = .pill(color: pill.rightColor)
+            }
+            
+        case .horizontalFlip:
+            // Ters yatay: Sağ-Sol
+            board[pill.row][pill.col] = .pill(color: pill.rightColor)
+            if pill.col + 1 < Self.boardWidth {
+                board[pill.row][pill.col + 1] = .pill(color: pill.leftColor)
+            }
+            
+        case .verticalFlip:
+            // Ters dikey: Alt-Üst
+            board[pill.row][pill.col] = .pill(color: pill.rightColor)
+            if pill.row + 1 < Self.boardHeight {
+                board[pill.row + 1][pill.col] = .pill(color: pill.leftColor)
+            }
         }
         
         // Eşleşmeleri kontrol et
@@ -268,28 +311,38 @@ class DrMarioGame: ObservableObject {
     }
     
     private func applyGravity() {
+        var hasChanges = false
+        
+        // Her sütun için yerçekimi uygula
         for col in 0..<Self.boardWidth {
-            var column: [GamePiece] = []
-            
-            // Boş olmayan parçaları topla
-            for row in (0..<Self.boardHeight).reversed() {
-                if board[row][col].type != .empty {
-                    column.append(board[row][col])
-                }
-            }
-            
-            // Sütunu yeniden doldur
-            for row in 0..<Self.boardHeight {
-                if row >= Self.boardHeight - column.count {
-                    board[row][col] = column[Self.boardHeight - 1 - row]
-                } else {
-                    board[row][col] = .empty
+            // Alttan üste doğru kontrol et
+            for row in (1..<Self.boardHeight).reversed() {
+                if board[row][col].type == .pill {
+                    // Bu hap düşebilir mi kontrol et
+                    var targetRow = row
+                    
+                    // Mümkün olduğunca aşağı in
+                    while targetRow + 1 < Self.boardHeight &&
+                          board[targetRow + 1][col].type == .empty {
+                        targetRow += 1
+                    }
+                    
+                    // Eğer hareket edecekse
+                    if targetRow != row {
+                        board[targetRow][col] = board[row][col]
+                        board[row][col] = .empty
+                        hasChanges = true
+                    }
                 }
             }
         }
         
-        // Tekrar eşleşme kontrol et
-        checkMatches()
+        // Eğer değişiklik olduysa tekrar kontrol et
+        if hasChanges {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.checkMatches()
+            }
+        }
     }
     
     private func checkGameOver() {
@@ -313,7 +366,14 @@ class DrMarioGame: ObservableObject {
     func moveRight() {
         guard let pill = currentPill, isRunning, !gameOver else { return }
         
-        let maxCol = pill.orientation == .horizontal ? Self.boardWidth - 2 : Self.boardWidth - 1
+        let maxCol: Int
+        switch pill.orientation {
+        case .horizontal, .horizontalFlip:
+            maxCol = Self.boardWidth - 2 // Yatay modlar için
+        case .vertical, .verticalFlip:
+            maxCol = Self.boardWidth - 1 // Dikey modlar için
+        }
+        
         if pill.col < maxCol && !wouldCollideAfterMove(pill: pill, newCol: pill.col + 1) {
             currentPill?.col = pill.col + 1
         }
@@ -322,7 +382,7 @@ class DrMarioGame: ObservableObject {
     func rotatePill() {
         guard var pill = currentPill, isRunning, !gameOver else { return }
         
-        pill.orientation = pill.orientation == .horizontal ? .vertical : .horizontal
+        pill.orientation = pill.orientation.next
         
         // Rotasyon sonrası çarpışma kontrolü
         if !wouldCollideAfterRotation(pill: pill) {
@@ -340,41 +400,65 @@ class DrMarioGame: ObservableObject {
             return true
         }
         
-        if pill.orientation == .horizontal && newCol + 1 >= Self.boardWidth {
-            return true
+        // Yatay modlar için sağ sınır kontrolü
+        switch pill.orientation {
+        case .horizontal, .horizontalFlip:
+            if newCol + 1 >= Self.boardWidth {
+                return true
+            }
+        case .vertical, .verticalFlip:
+            break // Dikey modlar için ekstra kontrol yok
         }
         
         if pill.row >= Self.boardHeight {
             return false
         }
         
+        // Ana parça kontrolü
         if board[pill.row][newCol].type != .empty {
             return true
         }
         
-        if pill.orientation == .horizontal && board[pill.row][newCol + 1].type != .empty {
-            return true
+        // İkinci parça kontrolü
+        switch pill.orientation {
+        case .horizontal, .horizontalFlip:
+            // Yatay: sağ parça kontrolü
+            if board[pill.row][newCol + 1].type != .empty {
+                return true
+            }
+        case .vertical, .verticalFlip:
+            // Dikey: alt parça kontrolü
+            if pill.row + 1 < Self.boardHeight && board[pill.row + 1][newCol].type != .empty {
+                return true
+            }
         }
         
         return false
     }
     
     private func wouldCollideAfterRotation(pill: FallingPill) -> Bool {
-        if pill.orientation == .horizontal && pill.col + 1 >= Self.boardWidth {
+        // Ana hücre her zaman kontrol edilmeli
+        if pill.row >= Self.boardHeight || board[pill.row][pill.col].type != .empty {
             return true
         }
         
-        if pill.row >= Self.boardHeight {
-            return false
-        }
-        
-        if board[pill.row][pill.col].type != .empty {
-            return true
-        }
-        
-        if pill.orientation == .horizontal && pill.col + 1 < Self.boardWidth {
+        switch pill.orientation {
+        case .horizontal, .horizontalFlip:
+            // Yatay modlara geçerken sağ kontrol
+            if pill.col + 1 >= Self.boardWidth {
+                return true // Sağ sınır kontrolü
+            }
             if board[pill.row][pill.col + 1].type != .empty {
-                return true
+                return true // Sağ hücre dolu mu?
+            }
+            
+        case .vertical, .verticalFlip:
+            // Dikey modlara geçerken alt kontrol
+            if pill.row + 1 >= Self.boardHeight {
+                return true // Alt sınır kontrolü
+            }
+            if board[pill.row + 1][pill.col].type != .empty {
+                return true // Alt hücre dolu mu?
             }
         }
         
@@ -384,7 +468,7 @@ class DrMarioGame: ObservableObject {
 
 // MARK: - SwiftUI Views
 
-struct DRMarioView: View {
+struct ContentView: View {
     @StateObject private var game = DrMarioGame()
     
     var body: some View {
@@ -517,11 +601,39 @@ struct GameBoardView: View {
     
     private func getPieceAt(row: Int, col: Int) -> GamePiece {
         // Önce mevcut hapı kontrol et
-        if let pill = game.currentPill, pill.row == row {
-            if pill.col == col {
-                return .pill(color: pill.leftColor)
-            } else if pill.orientation == .horizontal && pill.col + 1 == col {
-                return .pill(color: pill.rightColor)
+        if let pill = game.currentPill {
+            switch pill.orientation {
+            case .horizontal:
+                // Normal yatay: Sol-Sağ
+                if pill.row == row && pill.col == col {
+                    return .pill(color: pill.leftColor)
+                } else if pill.row == row && pill.col + 1 == col {
+                    return .pill(color: pill.rightColor)
+                }
+                
+            case .vertical:
+                // Normal dikey: Üst-Alt
+                if pill.row == row && pill.col == col {
+                    return .pill(color: pill.leftColor)
+                } else if pill.row + 1 == row && pill.col == col {
+                    return .pill(color: pill.rightColor)
+                }
+                
+            case .horizontalFlip:
+                // Ters yatay: Sağ-Sol
+                if pill.row == row && pill.col == col {
+                    return .pill(color: pill.rightColor)
+                } else if pill.row == row && pill.col + 1 == col {
+                    return .pill(color: pill.leftColor)
+                }
+                
+            case .verticalFlip:
+                // Ters dikey: Alt-Üst
+                if pill.row == row && pill.col == col {
+                    return .pill(color: pill.rightColor)
+                } else if pill.row + 1 == row && pill.col == col {
+                    return .pill(color: pill.leftColor)
+                }
             }
         }
         
