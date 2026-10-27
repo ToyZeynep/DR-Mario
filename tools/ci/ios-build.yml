@@ -4,7 +4,7 @@ name: iOS build
 
 on:
   push:
-    paths: ["DR. Mario/**", ".github/workflows/ios-build.yml"]
+    paths: ["VirusHunt/**", ".github/workflows/ios-build.yml"]
   workflow_dispatch:
 
 jobs:
@@ -22,13 +22,13 @@ jobs:
       - name: Build (simulator, Debug)
         run: |
           set -o pipefail
-          xcodebuild -project "DR. Mario/DR. Mario.xcodeproj" -target "DR. Mario" -configuration Debug \
+          xcodebuild -project "VirusHunt/VirusHunt.xcodeproj" -target "VirusHunt" -configuration Debug \
             -sdk iphonesimulator -arch arm64 SYMROOT="$PWD/build" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build.log | grep -E "error:|warning:|BUILD" | grep -v "appintents" | head -300
 
       - name: Build (device, Release, imzasız)
         run: |
           set -o pipefail
-          xcodebuild -project "DR. Mario/DR. Mario.xcodeproj" -target "DR. Mario" -configuration Release \
+          xcodebuild -project "VirusHunt/VirusHunt.xcodeproj" -target "VirusHunt" -configuration Release \
             -sdk iphoneos SYMROOT="$PWD/build-release" CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error:|BUILD" | head -100
 
       - name: Screenshots
@@ -41,13 +41,13 @@ jobs:
           xcrun simctl install "$UDID" "$APP"
           mkdir -p shots
           for s in setup title level cpu-level single cpu settings help lobby; do
-            xcrun simctl terminate "$UDID" com.zeynep.DR.Mario || true
-            xcrun simctl launch "$UDID" com.zeynep.DR.Mario -vhShot "$s" -AppleLanguages "(tr)"
+            xcrun simctl terminate "$UDID" com.zeynep.virushunt || true
+            xcrun simctl launch "$UDID" com.zeynep.virushunt -vhShot "$s" -AppleLanguages "(tr)"
             sleep 7
             xcrun simctl io "$UDID" screenshot "shots/$s.png"
           done
-          xcrun simctl terminate "$UDID" com.zeynep.DR.Mario || true
-          xcrun simctl launch "$UDID" com.zeynep.DR.Mario -vhShot title -AppleLanguages "(en)"
+          xcrun simctl terminate "$UDID" com.zeynep.virushunt || true
+          xcrun simctl launch "$UDID" com.zeynep.virushunt -vhShot title -AppleLanguages "(en)"
           sleep 6
           xcrun simctl io "$UDID" screenshot "shots/title-en.png"
 

@@ -11,7 +11,7 @@ def pairs(name):
 named = pairs('String[][] NAMED'); cyr = pairs('String[][] CYRILLIC_ALIASES'); gr = pairs('String[][] GREEK_ALIASES')
 def sl(s): return '"' + s.replace('\\', '\\\\').replace('"', '\\"') + '"'
 def jl(s): return s.encode().decode('unicode_escape') if '\\' in s else s
-o = ['//\n//  PixelFontData.swift\n//  DR. Mario\n//\n//  OTOMATİK ÜRETİLDİ (tools/font.py): com.rummuscan.game.PixelFont glyph tabloları (VirusHunt).\n//\n\nenum PixelFontData {']
+o = ['//\n//  PixelFontData.swift\n//  VirusHunt\n//\n//  OTOMATİK ÜRETİLDİ (tools/font.py): com.rummuscan.game.PixelFont glyph tabloları (VirusHunt).\n//\n\nenum PixelFontData {']
 o.append('    static let FONT: [String] = [')
 for f in font: o.append('        ' + sl(jl(f)) + ',')
 o.append('    ]\n')

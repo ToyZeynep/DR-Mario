@@ -58,7 +58,7 @@ n = len(langs)
 for name, vals in entries:
     assert len(vals) == n, (name, len(vals))
 o = []
-o.append('//\n//  Txt.swift\n//  DR. Mario\n//\n//  OTOMATİK ÜRETİLDİ (tools/i18n.py): com.rummuscan.core.i18n.Txt + Lang (VirusHunt).\n//  Elle düzenleme; Android tarafındaki Txt.java değişince betiği yeniden çalıştır.\n//\n\nimport Foundation\n')
+o.append('//\n//  Txt.swift\n//  VirusHunt\n//\n//  OTOMATİK ÜRETİLDİ (tools/i18n.py): com.rummuscan.core.i18n.Txt + Lang (VirusHunt).\n//  Elle düzenleme; Android tarafındaki Txt.java değişince betiği yeniden çalıştır.\n//\n\nimport Foundation\n')
 o.append('/// Oyun dili: cihazın dili desteklenenlerden biriyse o, aksi hâlde İngilizce.')
 o.append('enum Lang: Int, CaseIterable {')
 o.append('    case ' + ', '.join(l for l, _ in langs))
@@ -113,7 +113,7 @@ def parse_tree(s, i):
     v, i = parse_literal(s, i); return v, i
 tree, _ = parse_tree(h, start)
 assert len(tree) == n, len(tree)
-o = ['//\n//  HelpText.swift\n//  DR. Mario\n//\n//  OTOMATİK ÜRETİLDİ (tools/i18n.py): com.rummuscan.core.i18n.HelpText (VirusHunt).\n//  NASIL OYNANIR ekranının metinleri (Lang sırasıyla). Yer tutucular: {P} {T} {RANKS}.\n//\n\nimport Foundation\n']
+o = ['//\n//  HelpText.swift\n//  VirusHunt\n//\n//  OTOMATİK ÜRETİLDİ (tools/i18n.py): com.rummuscan.core.i18n.HelpText (VirusHunt).\n//  NASIL OYNANIR ekranının metinleri (Lang sırasıyla). Yer tutucular: {P} {T} {RANKS}.\n//\n\nimport Foundation\n']
 o.append('enum HelpText {')
 o.append('    struct Page {\n        let title: String\n        let body: String\n    }\n')
 for k, v in consts.items(): o.append('    static let %s = %s' % (k, v))

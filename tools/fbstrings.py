@@ -19,7 +19,7 @@ for d in sorted(os.listdir(res)):
             m[k] = v
     if m: table[code] = m
 def lit(s): return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
-o = ['//\n//  FeedbackStrings.swift\n//  DR. Mario\n//\n//  OTOMATİK ÜRETİLDİ (tools/fbstrings.py): Android res/values-*/strings.xml içindeki rs_feedback_*\n//  metinleri ("Android" -> "iOS"). Geri bildirim penceresi bunları cihaz diline göre kullanır.\n//\n\nenum FeedbackStrings {']
+o = ['//\n//  FeedbackStrings.swift\n//  VirusHunt\n//\n//  OTOMATİK ÜRETİLDİ (tools/fbstrings.py): Android res/values-*/strings.xml içindeki rs_feedback_*\n//  metinleri ("Android" -> "iOS"). Geri bildirim penceresi bunları cihaz diline göre kullanır.\n//\n\nenum FeedbackStrings {']
 o.append('    static let TABLE: [String: [String: String]] = [')
 for code, m in table.items():
     o.append('        "%s": [' % code)

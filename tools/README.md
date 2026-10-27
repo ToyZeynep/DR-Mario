@@ -8,7 +8,7 @@ aynı tutuldu ki Android'de bir şey değişince iOS'a taşımak kolay olsun.
 
 ## Klasörler
 
-| iOS (`DR. Mario/DR. Mario/`) | Android karşılığı |
+| iOS (`VirusHunt/VirusHunt/`) | Android karşılığı |
 |---|---|
 | `Gdx/` | libGDX'in kendisi (Game/Screen, SpriteBatch, Viewport, Preferences, Net, Music). iOS'ta Metal + UIKit (`IOSBackend.swift`). |
 | `core/` | `core/src/main/java/com/rummuscan/core` (Board, GameEngine, AI, net, i18n) |
@@ -20,15 +20,15 @@ aynı tutuldu ki Android'de bir şey değişince iOS'a taşımak kolay olsun.
 
 ```sh
 # 24 dillik metinler (Txt.java, Lang.java, HelpText.java)
-python3 tools/i18n.py <VirusHunt>/core/src/main/java/com/rummuscan/core/i18n "DR. Mario/DR. Mario/core/i18n"
+python3 tools/i18n.py <VirusHunt>/core/src/main/java/com/rummuscan/core/i18n "VirusHunt/VirusHunt/core/i18n"
 # Piksel font glyph'leri (PixelFont.java)
-python3 tools/font.py <VirusHunt>/core/src/main/java/com/rummuscan/game/PixelFont.java "DR. Mario/DR. Mario/game/PixelFontData.swift"
+python3 tools/font.py <VirusHunt>/core/src/main/java/com/rummuscan/game/PixelFont.java "VirusHunt/VirusHunt/game/PixelFontData.swift"
 # Geri bildirim penceresi metinleri (android/res/values-*/strings.xml)
-python3 tools/fbstrings.py <VirusHunt>/android/res "DR. Mario/DR. Mario/platform/FeedbackStrings.swift"
+python3 tools/fbstrings.py <VirusHunt>/android/res "VirusHunt/VirusHunt/platform/FeedbackStrings.swift"
 # Uygulama ikonu (tools/make_icon.ps1'in Python karşılığı)
-python3 tools/make_icon.py <VirusHunt> "DR. Mario/DR. Mario/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+python3 tools/make_icon.py <VirusHunt> "VirusHunt/VirusHunt/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
 # Müzikler
-for f in <VirusHunt>/assets/music/*.ogg; do ffmpeg -y -i "$f" -c:a aac -b:a 128k "DR. Mario/DR. Mario/GameAssets/music/$(basename "${f%.ogg}").m4a"; done
+for f in <VirusHunt>/assets/music/*.ogg; do ffmpeg -y -i "$f" -c:a aac -b:a 128k "VirusHunt/VirusHunt/GameAssets/music/$(basename "${f%.ogg}").m4a"; done
 ```
 
 ## Online uyumluluk (iPhone ⇄ Android aynı maç)
@@ -40,7 +40,7 @@ olmalı** (motorda/AI'da/rastgelelikte bir değişiklik taşındıysa yeniden ç
 
 ```sh
 javac -d out <VirusHunt>/core/src/main/java/com/rummuscan/core/{*,ai/*,i18n/*}.java tools/Parity.java && java -cp out Parity > java.txt
-swiftc -O -o parity tools/ParityMain.swift "DR. Mario/DR. Mario"/Gdx/*.swift "DR. Mario/DR. Mario"/core/*.swift "DR. Mario/DR. Mario"/core/*/*.swift && ./parity > swift.txt
+swiftc -O -o parity tools/ParityMain.swift "VirusHunt/VirusHunt"/Gdx/*.swift "VirusHunt/VirusHunt"/core/*.swift "VirusHunt/VirusHunt"/core/*/*.swift && ./parity > swift.txt
 diff java.txt swift.txt && echo AYNI
 ```
 
@@ -69,6 +69,6 @@ yalnızca `workflow` izni olan bir oturumdan kabul eder:
   → bu dosyanın içeriğini yapıştır → *Commit*.
 - **Terminalden:** `gh auth refresh -h github.com -s workflow` ile izin ver, sonra dosyayı kopyalayıp gönder.
 
-Sonra her `DR. Mario/` değişikliğinde kendiliğinden çalışır; elle başlatmak için repo → *Actions* →
+Sonra her `VirusHunt/` değişikliğinde kendiliğinden çalışır; elle başlatmak için repo → *Actions* →
 *iOS build* → *Run workflow*. Sonuçlar: çalışmanın sayfasındaki *Artifacts → ios-build*
 (`build.log`, `shots/*.png`).
