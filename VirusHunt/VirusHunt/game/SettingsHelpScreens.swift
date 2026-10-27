@@ -205,7 +205,7 @@ final class SettingsScreen: Screen {
 /// NASIL OYNANIR: sayfalı yardım metinleri (HelpText) + gizlilik politikası bağlantısı.
 final class HelpScreen: Screen {
 
-    static let PRIVACY_URL = "https://rummuscan.online/privacy-policy-virushunt.html"
+    static let PRIVACY_URL = "https://legendaryteam.org/virushunt/privacy/"
     static let INVITE_SECONDS = 30
 
     static let PANEL_X: Float = 8, PANEL_Y: Float = 30, PANEL_W: Float = 240, PANEL_H: Float = 168
