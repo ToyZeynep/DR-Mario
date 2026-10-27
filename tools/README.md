@@ -55,3 +55,20 @@ diff java.txt swift.txt && echo AYNI
 - **Reklam:** AdMob iOS reklam birimleri `platform/IOSPlatform.swift` → `AdConfig`; uygulama kimliği
   `Info.plist` → `GADApplicationIdentifier`. Boşken yayın derlemesinde reklam kapalıdır.
 - **Analiz/geri bildirim:** aynı uç noktalar, `platform = "ios"`.
+
+## GitHub'da otomatik iOS derlemesi (CI)
+
+`tools/ci/ios-build.yml`: macOS üzerinde simülatör (Debug) ve cihaz (Release, imzasız) derlemesi yapar,
+simülatörde 10 ekranın görüntüsünü alır (Türkçe + İngilizce başlık) ve `ios-build` adlı yapıt olarak
+yükler. Repo herkese açık olduğu için GitHub Actions dakikaları ücretsiz.
+
+Etkinleştirmek için dosyanın `.github/workflows/ios-build.yml` konumuna konması gerekir. GitHub bunu
+yalnızca `workflow` izni olan bir oturumdan kabul eder:
+
+- **Tarayıcıdan:** GitHub'da repo → *Add file → Create new file* → ad: `.github/workflows/ios-build.yml`
+  → bu dosyanın içeriğini yapıştır → *Commit*.
+- **Terminalden:** `gh auth refresh -h github.com -s workflow` ile izin ver, sonra dosyayı kopyalayıp gönder.
+
+Sonra her `DR. Mario/` değişikliğinde kendiliğinden çalışır; elle başlatmak için repo → *Actions* →
+*iOS build* → *Run workflow*. Sonuçlar: çalışmanın sayfasındaki *Artifacts → ios-build*
+(`build.log`, `shots/*.png`).
