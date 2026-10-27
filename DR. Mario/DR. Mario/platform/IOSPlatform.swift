@@ -324,8 +324,8 @@ enum IOSToast {
 enum AdConfig {
     /// AdMob'daki iOS uygulamasının reklam birimleri (ca-app-pub-XXXX/YYYY). Info.plist'teki
     /// GADApplicationIdentifier da aynı iOS uygulamasının kimliği olmalı.
-    static let RELEASE_REWARDED_ID = ""
-    static let RELEASE_INTERSTITIAL_ID = ""
+    static let RELEASE_REWARDED_ID = "ca-app-pub-7359263265391774/1702717957"
+    static let RELEASE_INTERSTITIAL_ID = "ca-app-pub-7359263265391774/1020403700"
 
     static let TEST_REWARDED_ID = "ca-app-pub-3940256099942544/1712485313"
     static let TEST_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/4411468910"

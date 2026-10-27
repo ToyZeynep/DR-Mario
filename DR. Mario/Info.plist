@@ -5,7 +5,7 @@
 	<!-- AdMob uygulama kimliği. ŞU AN Google'ın örnek (test) kimliği: AdMob'da iOS uygulaması
 	     açılınca onun kimliğiyle değiştirilmeli (bkz. platform/IOSPlatform.swift AdConfig). -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-7359263265391774~6272730388</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
