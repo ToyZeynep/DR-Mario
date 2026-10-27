@@ -332,6 +332,9 @@ final class Graphics {
     /// Çizim yüzeyinin piksel boyu.
     var backBufferWidth = 1
     var backBufferHeight = 1
+    /// Çentik / yuvarlak köşe payı (nokta): ekranın sol ve sağ kenarındaki güvenli alan boşluğu.
+    var safeInsetLeft: Float = 0
+    var safeInsetRight: Float = 0
     var deltaTime: Float = 0
 
     func getWidth() -> Int { return width }

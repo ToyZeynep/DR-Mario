@@ -86,6 +86,7 @@ final class OnlineVsScreen: Screen {
         let worldW = viewport.getWorldWidth()
         let ox = GameConfig.contentX(worldW)
         controls.layoutVs(ox, worldW)
+        renderer.placePauseAboveRotate(controls)
 
         let remoteEngine = remoteDriver.getEngine()
         var running = matchRunning()

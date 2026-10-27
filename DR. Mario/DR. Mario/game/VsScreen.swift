@@ -71,6 +71,7 @@ final class VsScreen: Screen {
         let worldW = viewport.getWorldWidth()
         let ox = GameConfig.contentX(worldW)
         controls.layoutVs(ox, worldW)
+        renderer.placePauseAboveRotate(controls)
 
         var running = matchRunning()
         GameMusic.setPaused(running && paused)

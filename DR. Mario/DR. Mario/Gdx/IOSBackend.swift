@@ -551,6 +551,8 @@ final class GameViewController: UIViewController, MTKViewDelegate {
         let g = Gdx.graphics
         g.width = max(1, Int(view.bounds.width))
         g.height = max(1, Int(view.bounds.height))
+        g.safeInsetLeft = Float(view.safeAreaInsets.left)
+        g.safeInsetRight = Float(view.safeAreaInsets.right)
         g.backBufferWidth = max(1, Int(view.drawableSize.width))
         g.backBufferHeight = max(1, Int(view.drawableSize.height))
         backend.drawableSize = view.drawableSize

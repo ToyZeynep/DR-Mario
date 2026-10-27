@@ -125,7 +125,25 @@ final class TouchControls {
             let rotCx = rotateMinX + space / 2, rotCy: Float = 30
             placeBox(ROTATE, rotCx, rotCy, rd / 2, rotateMinX, 0, worldW, rotCy + 1.7 * rd)
         }
+        applySafeInsets(worldW)
         clampHitAreas(worldW)
+    }
+
+    /// iOS: çentikli ekranlarda okları ve döndürme tuşunu güvenli alanın içine kaydırır.
+    private func applySafeInsets(_ worldW: Float) {
+        let g = Gdx.graphics
+        let scale = worldW / Float(max(1, g.width))
+        let left = g.safeInsetLeft * scale, right = g.safeInsetRight * scale
+        // Daireler içeri kayar; dokunma alanları ekran kenarına kadar uzamaya devam eder.
+        for i in [TouchControls.LEFT, TouchControls.DOWN] {
+            cx[i] += left
+            hit[i].width += left
+        }
+        cx[TouchControls.RIGHT] += left
+        hit[TouchControls.RIGHT].x += left
+        cx[TouchControls.ROTATE] -= right
+        hit[TouchControls.ROTATE].x -= right
+        hit[TouchControls.ROTATE].width += right
     }
 
     private func placeBox(_ i: Int, _ centerX: Float, _ centerY: Float, _ r: Float,
@@ -326,13 +344,28 @@ final class VsBoardsRenderer {
 
     // ---- Duraklatma butonu/kutusu ----
 
+    /// iOS: duraklatma butonu ortadaki boşluk yerine döndürme tuşunun üstünde durur.
+    private var pauseCx: Float = -1, pauseCy: Float = 0
+
+    func placePauseAboveRotate(_ controls: TouchControls) {
+        let hit = controls.hitArea(TouchControls.ROTATE)
+        pauseCx = controls.centerX(TouchControls.ROTATE)
+        pauseCy = min(hit.y + hit.height + VsBoardsRenderer.PAUSE_BTN_R + 4,
+                      Float(GameConfig.WORLD_HEIGHT) - VsBoardsRenderer.PAUSE_BTN_R - 4)
+    }
+
+    private func pauseCenter(_ ox: Float) -> (Float, Float) {
+        if pauseCx >= 0 { return (pauseCx, pauseCy) }
+        return (ox + VsBoardsRenderer.PAUSE_BTN_CX, VsBoardsRenderer.PAUSE_BTN_CY)
+    }
+
     func pauseButtonBounds(_ ox: Float) -> Rectangle {
-        let cx = ox + VsBoardsRenderer.PAUSE_BTN_CX, r = VsBoardsRenderer.PAUSE_BTN_R
-        return Rectangle(cx - r, VsBoardsRenderer.PAUSE_BTN_CY - r, r * 2, r * 2)
+        let (cx, cy) = pauseCenter(ox), r = VsBoardsRenderer.PAUSE_BTN_R
+        return Rectangle(cx - r, cy - r, r * 2, r * 2)
     }
 
     func drawPauseButton(_ ox: Float) {
-        let cx = ox + VsBoardsRenderer.PAUSE_BTN_CX, cy = VsBoardsRenderer.PAUSE_BTN_CY, r = VsBoardsRenderer.PAUSE_BTN_R
+        let (cx, cy) = pauseCenter(ox), r = VsBoardsRenderer.PAUSE_BTN_R
         ui.circle(cx, cy, r + 1.5, NesUi.BLACK)
         ui.circleGradient(cx, cy, r, Color(0.10, 0.12, 0.18, 0.92), Color(0.38, 0.44, 0.56, 0.92))
         ui.ring(cx, cy, r, 1.3, NesUi.WHITE)
