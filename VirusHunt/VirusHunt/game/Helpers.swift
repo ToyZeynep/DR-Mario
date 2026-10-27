@@ -367,6 +367,7 @@ enum AccountLogin {
                 if let me = r.me, me.verified { accounts.submitRating(me.rating) }
                 cb.onSuccess()
             }, onError: { message in
+                print("Online login error: \(message)")
                 cb.onFailure(describe(message), OnlineClient.isTransient(message))
             }))
         }, failed: { message in

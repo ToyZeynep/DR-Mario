@@ -4,10 +4,8 @@
 //
 //  com.rummuscan.game.AccountScreen + AccountSetupScreen (VirusHunt Android sürümünden birebir).
 //
-//  iOS FARKI: Play Games yalnızca Android'de var. App Store kuralları (2.3.10) uygulamada başka
-//  mobil platformların adının geçmesini istemediği için ilk açılıştaki hesap seçiminde "PLAY GAMES"
-//  düğmesi ve açıklaması iOS'ta gösterilmez (hesap servisi Play Games'i desteklemiyorsa); geri kalan
-//  akış aynıdır.
+//  iOS FARKI: Play Games'in yerini Game Center alır (platform/GameCenter.swift); metinler "GAME CENTER"
+//  der, akış aynıdır.
 //
 
 import Foundation
@@ -265,7 +263,7 @@ final class AccountSetupScreen: Screen {
 
     private let tapCatcher = TapCatcher(4)
 
-    /// iOS: Play Games yoksa düğmesi ve açıklaması hiç gösterilmez (bkz. dosya başındaki not).
+    /// Platform hesabı (Android: Play Games, iOS: Game Center) yoksa düğmesi ve açıklaması gösterilmez.
     private var showPgs: Bool { return OnlineSession.accounts().isPlayGamesAvailable() }
 
     init(_ game: Game, _ afterLogin: (() -> Screen)? = nil) {

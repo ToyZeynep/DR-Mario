@@ -100,6 +100,29 @@
 			knownRegions = (
 				en,
 				Base,
+				tr,
+				de,
+				es,
+				fr,
+				pt,
+				id,
+				ru,
+				it,
+				pl,
+				nl,
+				uk,
+				ro,
+				cs,
+				hu,
+				sv,
+				fi,
+				da,
+				ms,
+				fil,
+				el,
+				sk,
+				nb,
+				vi,
 			);
 			mainGroup = 218B326B2DE654870075E184;
 			minimizedProjectReferenceProxies = 1;
@@ -263,6 +286,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = CS883PSQ64;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = VirusHunt.entitlements;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Virüs Avı: Kapsül";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
@@ -299,6 +323,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = CS883PSQ64;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = VirusHunt.entitlements;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Virüs Avı: Kapsül";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";

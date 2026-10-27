@@ -98,6 +98,7 @@ final class OnlineClient {
 
     func login(_ c: Credentials, _ linkGuestId: String?, _ cb: ClientCallback<LoginResult>) {
         let body = "{\"kind\":" + OnlineClient.q(c.kind) + ",\"secret\":" + OnlineClient.q(c.secret) + ",\"name\":" + OnlineClient.q(c.displayName)
+            + (c.extraJson.isEmpty ? "" : "," + c.extraJson)
             + (linkGuestId != nil ? ",\"linkGuest\":" + OnlineClient.q(linkGuestId) : "") + "}"
         post("login.php", body, { v in
             let r = LoginResult(session: try v.getString("session"), me: OnlineClient.parseProfile(v.get("me")))

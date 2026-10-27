@@ -33,6 +33,8 @@
 	<string>ca-app-pub-7359263265391774~6272730388</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Your data is used to show you more relevant ads. The game stays free either way.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

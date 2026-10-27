@@ -44,9 +44,14 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
+        let gameCenter = GameCenterAccountService()
         let controller = GameViewController {
-            VirusHuntGame(GuestAccountService(), IOSPlatform.analyticsDevice())
+            VirusHuntGame(gameCenter, IOSPlatform.analyticsDevice())
         }
+        gameCenter.controller = controller
+        #if DEBUG
+        gameCenter.runSelfTestIfRequested()
+        #endif
         IOSPlatform.install(controller)
         window.rootViewController = controller
         window.backgroundColor = .black
@@ -348,145 +353,53 @@ enum AdConfig {
 }
 
 #if canImport(GoogleMobileAds) && canImport(UserMessagingPlatform)
-final class IOSAds: NSObject, Ads.Platform {
-    private static let RETRY_SECONDS: TimeInterval = 30
-    /// "Devam (reklam)"a basıldığında reklam yüklenmemişse beklenecek en uzun süre.
-    private static let REWARDED_WAIT_SECONDS: TimeInterval = 6
+extension AdMobConfiguration {
+    /// Geçiş reklamı sıklığı oyun tarafında (Ads: 3 oyunda bir, 2 dk arayla); burada ek bekleme yok.
+    /// Test kimlikleri DEBUG derlemede AdMobManager tarafından kendiliğinden kullanılır.
+    static let virusHunt = AdMobConfiguration(
+        interstitialUnitID: AdConfig.RELEASE_INTERSTITIAL_ID,
+        rewardedUnitID: AdConfig.RELEASE_REWARDED_ID,
+        interstitialCooldown: 0,
+        maxAdContentRating: .teen
+    )
+}
 
-    private weak var controller: GameViewController?
-    private var started = false
-    private var rewarded: RewardedAd?
-    private var interstitial: InterstitialAd?
-    private var loadingRewarded = false, loadingInterstitial = false
-    private var delegates: [AdDelegate] = []
-
+/// Oyunun Ads.Platform'u ile ortak AdMobManager arasındaki köprü: onay (UMP) → ATT → SDK sırası,
+/// ön yükleme ve yeniden deneme AdMobManager'da; oyuna özel kurallar ve onay istatistiği burada.
+final class IOSAds: Ads.Platform {
     static func make(_ controller: GameViewController) -> Ads.Platform? {
-        if AdConfig.rewardedId.isEmpty || AdConfig.interstitialId.isEmpty { return nil }
-        return IOSAds(controller)
+        if AdConfig.RELEASE_REWARDED_ID.isEmpty || AdConfig.RELEASE_INTERSTITIAL_ID.isEmpty { return nil }
+        return IOSAds()
     }
 
-    private init(_ controller: GameViewController) {
-        self.controller = controller
-        super.init()
-        DispatchQueue.main.async { self.requestConsent() }
-    }
-
-    private func requestConsent() {
-        let consent = ConsentInformation.shared
-        consent.requestConsentInfoUpdate(with: RequestParameters()) { [weak self] error in
-            guard let self = self else { return }
-            if error != nil { self.startIfAllowed(); return }
-            let willShow = consent.consentStatus == .required
-            DispatchQueue.main.async {
-                ui {
-                    ConsentForm.loadAndPresentIfRequired(from: self.presenter()) { [weak self] _ in
-                        if willShow { self?.reportConsent("first_launch") }
-                        self?.startIfAllowed()
-                    }
-                }
-            }
-        }
-        startIfAllowed() // önceki oturumdan onay varsa beklemeden başla
-    }
-
-    private func presenter() -> UIViewController? {
-        return MainActor.assumeIsolated { controller?.topPresenter() }
-    }
-
-    private func startIfAllowed() {
-        DispatchQueue.main.async {
-            guard ConsentInformation.shared.canRequestAds, !self.started else { return }
-            self.started = true
-            // Hedef kitle 13+: reklam içeriği en fazla "Teen" seviyesinde (Android ile aynı).
-            ui {
-                MobileAds.shared.requestConfiguration.maxAdContentRating = .teen
-                MobileAds.shared.start(completionHandler: nil)
-            }
-            self.loadRewarded()
-            self.loadInterstitial()
-        }
-    }
-
-    private func loadRewarded() {
-        if loadingRewarded || !started || rewarded != nil { return }
-        loadingRewarded = true
-        RewardedAd.load(with: AdConfig.rewardedId, request: Request()) { [weak self] ad, error in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.loadingRewarded = false
-                if let ad = ad, error == nil {
-                    self.rewarded = ad
-                } else {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + IOSAds.RETRY_SECONDS) { self.loadRewarded() }
-                }
-            }
-        }
-    }
-
-    private func loadInterstitial() {
-        if loadingInterstitial || !started || interstitial != nil { return }
-        loadingInterstitial = true
-        InterstitialAd.load(with: AdConfig.interstitialId, request: Request()) { [weak self] ad, error in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.loadingInterstitial = false
-                if let ad = ad, error == nil {
-                    self.interstitial = ad
-                } else {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + IOSAds.RETRY_SECONDS) { self.loadInterstitial() }
-                }
+    private init() {
+        Task { @MainActor in
+            let before = ConsentInformation.shared.consentStatus
+            await AdMobManager.shared.start(with: .virusHunt)
+            if before != .obtained && ConsentInformation.shared.consentStatus == .obtained {
+                IOSAds.reportConsent("first_launch")
             }
         }
     }
 
     // ---- Ads.Platform ----
 
-    func isRewardedReady() -> Bool { return rewarded != nil }
-
-    func showRewarded(_ onRewarded: @escaping () -> Void, _ onClosed: @escaping () -> Void) {
-        DispatchQueue.main.async {
-            self.loadRewarded()
-            self.showRewardedWhenLoaded(onRewarded, onClosed, Date().addingTimeInterval(IOSAds.REWARDED_WAIT_SECONDS))
-        }
+    func isRewardedReady() -> Bool {
+        return MainActor.assumeIsolated { AdMobManager.shared.isRewardedReady }
     }
 
-    /// Reklam henüz yüklenmediyse en fazla REWARDED_WAIT_SECONDS bekler; gelmezse onClosed (ödülsüz).
-    private func showRewardedWhenLoaded(_ onRewarded: @escaping () -> Void, _ onClosed: @escaping () -> Void, _ deadline: Date) {
-        guard let ad = rewarded else {
-            if Date() >= deadline {
-                Gdx.app.postRunnable(onClosed)
-                return
+    func showRewarded(_ onRewarded: @escaping () -> Void, _ onClosed: @escaping () -> Void) {
+        Task { @MainActor in
+            let earned = await AdMobManager.shared.showRewarded()
+            Gdx.app.postRunnable {
+                if earned { onRewarded() }
+                onClosed()
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.showRewardedWhenLoaded(onRewarded, onClosed, deadline) }
-            return
-        }
-        guard let vc = presenter() else {
-            Gdx.app.postRunnable(onClosed)
-            return
-        }
-        rewarded = nil
-        let d = AdDelegate(onDone: { [weak self] in
-            Gdx.app.postRunnable(onClosed)
-            self?.loadRewarded()
-        })
-        keep(d)
-        ui {
-            ad.fullScreenContentDelegate = d
-            ad.present(from: vc) { Gdx.app.postRunnable(onRewarded) }
         }
     }
 
     func showInterstitial() {
-        DispatchQueue.main.async {
-            guard let ad = self.interstitial, let vc = self.presenter() else { return }
-            self.interstitial = nil
-            let d = AdDelegate(onDone: { [weak self] in self?.loadInterstitial() })
-            self.keep(d)
-            ui {
-                ad.fullScreenContentDelegate = d
-                ad.present(from: vc)
-            }
-        }
+        Task { @MainActor in await AdMobManager.shared.showInterstitial() }
     }
 
     func isPrivacyOptionsRequired() -> Bool {
@@ -494,23 +407,14 @@ final class IOSAds: NSObject, Ads.Platform {
     }
 
     func showPrivacyOptions() {
-        DispatchQueue.main.async {
-            ui {
-                ConsentForm.presentPrivacyOptionsForm(from: self.presenter()) { [weak self] _ in
-                    self?.reportConsent("privacy_options")
-                    self?.startIfAllowed()
-                }
-            }
+        Task { @MainActor in
+            await AdMobManager.shared.presentPrivacyOptions()
+            IOSAds.reportConsent("privacy_options")
         }
     }
 
-    private func keep(_ d: AdDelegate) {
-        delegates.removeAll { $0.finished }
-        delegates.append(d)
-    }
-
     /// Onay penceresinin sonucu, anonim istatistik (Android'deki reportConsent ile aynı kurallar).
-    private func reportConsent(_ source: String) {
+    private static func reportConsent(_ source: String) {
         let obtained = ConsentInformation.shared.consentStatus == .obtained
         let purposes = UserDefaults.standard.string(forKey: "IABTCF_PurposeConsents") ?? ""
         let result: String
@@ -524,29 +428,6 @@ final class IOSAds: NSObject, Ads.Platform {
             Analytics.adConsent(source, result, country.count == 2 ? country : "", purposes, bundle)
         }
     }
-}
-
-/// Reklam SDK'sının @MainActor işaretli çağrıları için: buradaki her şey zaten ana thread'de çalışır.
-private func ui(_ body: @MainActor () -> Void) {
-    MainActor.assumeIsolated { body() }
-}
-
-/// Tam ekran reklamın kapanışını bildirir (reklam gösterilemediyse de).
-private final class AdDelegate: NSObject, FullScreenContentDelegate {
-    private let onDone: () -> Void
-    private(set) var finished = false
-
-    init(onDone: @escaping () -> Void) { self.onDone = onDone }
-
-    private func done() {
-        if finished { return }
-        finished = true
-        onDone()
-    }
-
-    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) { done() }
-
-    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) { done() }
 }
 #else
 /// Reklam SDK'sı eklenmemiş derleme: reklam yok (masaüstü sürümdeki gibi).

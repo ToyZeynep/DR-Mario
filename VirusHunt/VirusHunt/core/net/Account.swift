@@ -54,11 +54,13 @@ enum Achievement {
 
 /// login.php'ye gidecek kimlik kanıtı.
 struct Credentials {
-    /// "pgs" (Play Games) ya da "guest".
+    /// "pgs" (Play Games), "gc" (iOS Game Center) ya da "guest".
     let kind: String
-    /// pgs: server auth code; guest: cihaza bağlı kalıcı UUID.
+    /// pgs: server auth code; guest: cihaza bağlı kalıcı UUID; gc: kullanılmaz.
     let secret: String
     let displayName: String
+    /// gc: kimlik doğrulama imzasının alanları; login gövdesine olduğu gibi eklenen JSON parçası.
+    var extraJson: String = ""
 }
 
 protocol SignInCallback {
